@@ -95,29 +95,6 @@
             color: #a0aec0; /* A light gray for hover effect */
         }
 
-        /* Gemini feature button styling */
-        .gemini-btn {
-            background: linear-gradient(90deg, #4f46e5, #c026d3);
-        }
-        
-        .gemini-btn:disabled {
-            opacity: 0.7;
-            cursor: not-allowed;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        .spinner {
-            display: inline-block;
-            width: 1rem;
-            height: 1rem;
-            border: 2px solid rgba(255,255,255,0.5);
-            border-radius: 50%;
-            border-top-color: #fff;
-            animation: spin 1s ease-in-out infinite;
-        }
-
     </style>
 </head>
 <body class="font-sans antialiased">
@@ -126,9 +103,11 @@
       Main container for the interactive sequence.
       `h-screen` makes it take up the full viewport height.
       - items-start (mobile): Aligns content to the top.
+      - pt-32 (mobile): Adds padding to push content down to a "mid-top" position.
       - md:items-center (desktop): Vertically centers content on larger screens.
+      - md:pt-0 (desktop): Resets the top padding on larger screens.
     -->
-    <div id="sequence-container" class="relative w-full h-screen flex items-start md:items-center justify-center md:justify-start p-8 pt-24 md:p-16">
+    <div id="sequence-container" class="relative w-full h-screen flex items-start md:items-center justify-center md:justify-start p-8 pt-32 md:p-16 md:pt-8">
         
         <!-- Scene 1: "Hi There!" Text -->
         <div id="intro-scene" class="scene">
@@ -214,12 +193,6 @@
                 <div>
                     <label for="message" class="block text-lg font-medium text-white mb-2">Message</label>
                     <textarea id="message" name="message" rows="4" required class="w-full p-3 bg-gray-900 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-white transition-all duration-300"></textarea>
-                    
-                    <!-- Gemini Feature Button -->
-                    <button type="button" id="gemini-btn" class="gemini-btn hidden mt-3 text-white font-medium py-2 px-4 text-sm rounded-lg transition-all duration-300 flex items-center justify-center space-x-2">
-                        <span>✨ Help me write this</span>
-                        <span id="gemini-spinner" class="spinner hidden"></span>
-                    </button>
                 </div>
                 <div>
                     <button type="submit" class="mt-4 border-2 border-white bg-white text-black font-medium py-3 px-8 text-lg hover:bg-black hover:text-white transition-all duration-300">
@@ -271,9 +244,6 @@
 
         const getInTouchBtn = document.getElementById('get-in-touch-btn');
         const contactForm = document.getElementById('contact-form');
-        const geminiBtn = document.getElementById('gemini-btn');
-        const geminiSpinner = document.getElementById('gemini-spinner');
-        const messageTextarea = document.getElementById('message');
         
         // --- Core Functions ---
         function transitionTo(newSceneKey, direction = 1) { // Default to forward (down scroll)
@@ -384,70 +354,8 @@
                 submitButton.disabled = false;
             });
         });
-        
-        // --- Gemini Feature Logic ---
-        messageTextarea.addEventListener('input', () => {
-            if(messageTextarea.value.trim() !== '') {
-                geminiBtn.classList.remove('hidden');
-            } else {
-                geminiBtn.classList.add('hidden');
-            }
-        });
-        
-        geminiBtn.addEventListener('click', async () => {
-            const name = document.getElementById('name').value;
-            const email = document.getElementById('email').value;
-            const originalMessage = messageTextarea.value;
-            
-            if(!originalMessage) {
-                alert('Please type a message first.');
-                return;
-            }
-            
-            geminiBtn.disabled = true;
-            geminiSpinner.classList.remove('hidden');
-
-            const apiKey = ""; // API key is handled by the environment
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
-            
-            const prompt = `You are a helpful assistant. A person named "${name}" (email: "${email}") is writing a professional message to Gargesh Patil for his portfolio. Their initial thought is: "${originalMessage}". Help them rewrite this into a slightly more polished and professional message, while keeping the original intent and tone. Keep the response concise and under 60 words. Do not add a greeting or closing, just provide the body of the message.`;
-            
-            const payload = {
-                contents: [{ parts: [{ text: prompt }] }],
-            };
-            
-            try {
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`API request failed with status ${response.status}`);
-                }
-                
-                const result = await response.json();
-                const candidate = result.candidates?.[0];
-                
-                if (candidate && candidate.content?.parts?.[0]?.text) {
-                    messageTextarea.value = candidate.content.parts[0].text.trim();
-                } else {
-                    throw new Error('Unexpected response format from API.');
-                }
-                
-            } catch (error) {
-                console.error('Gemini API Error:', error);
-                alert('Sorry, I couldn\'t suggest a reply right now. Please try again.');
-            } finally {
-                geminiBtn.disabled = false;
-                geminiSpinner.classList.add('hidden');
-            }
-        });
 
     </script>
 
 </body>
 </html>
-
-
